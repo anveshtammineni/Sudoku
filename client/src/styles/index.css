@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --bg: #07111f;
+  --panel: rgba(15, 23, 42, 0.66);
+  --panel-strong: rgba(15, 23, 42, 0.88);
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --border: rgba(255, 255, 255, 0.12);
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
+  --bg: #ecfeff;
+  --panel: rgba(255, 255, 255, 0.82);
+  --panel-strong: rgba(255, 255, 255, 0.96);
+  --text: #082f49;
+  --muted: #475569;
+  --border: rgba(15, 23, 42, 0.1);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.12), transparent 30%),
+    radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.14), transparent 24%),
+    linear-gradient(135deg, #020617 0%, #07111f 42%, #0f172a 100%);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+html[data-theme='light'] body {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(14, 165, 233, 0.12), transparent 30%),
+    radial-gradient(circle at 80% 0%, rgba(34, 197, 94, 0.16), transparent 24%),
+    linear-gradient(135deg, #f8feff 0%, #ecfeff 48%, #dbeafe 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+@layer components {
+  .field-input {
+    @apply w-full rounded-2xl border border-white/10 bg-slate-950/30 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300/60 focus:ring-2 focus:ring-cyan-400/30 dark:bg-slate-950/45;
+  }
+
+  .control-button {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:-translate-y-0.5 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .control-button.muted {
+    @apply bg-slate-950/30 text-slate-100 hover:bg-slate-950/45;
+  }
+
+  .control-button.accent {
+    @apply border-cyan-400/20 bg-cyan-400/15 text-cyan-50 hover:bg-cyan-400/25;
+  }
+
+  .switch-pill {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/25 px-4 py-2 transition hover:bg-white/10;
+  }
+
+  .celebration-piece {
+    position: absolute;
+    top: -10%;
+    width: 10px;
+    height: 18px;
+    border-radius: 999px;
+    opacity: 0.95;
+    animation: celebrationFall 3.8s linear infinite;
+  }
+}
+
+@keyframes celebrationFall {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 120vh, 0) rotate(720deg);
+    opacity: 0;
+  }
+}
