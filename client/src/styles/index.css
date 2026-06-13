@@ -10,6 +10,11 @@
   --text: #f8fafc;
   --muted: #94a3b8;
   --border: rgba(255, 255, 255, 0.12);
+
+  --neon-cyan: 56 189 248;
+  --neon-purple: 232 121 249;
+  --neon-emerald: 52 211 153;
+  --neon-amber: 245 158 11;
 }
 
 html.dark {
@@ -56,6 +61,12 @@ textarea {
   font: inherit;
 }
 
+@layer base {
+  :focus-visible {
+    outline: none;
+  }
+}
+
 @layer components {
   .field-input {
     @apply w-full rounded-2xl border border-white/10 bg-slate-950/30 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300/60 focus:ring-2 focus:ring-cyan-400/30 dark:bg-slate-950/45;
@@ -75,6 +86,49 @@ textarea {
 
   .switch-pill {
     @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/25 px-4 py-2 transition hover:bg-white/10;
+  }
+
+  .glass-panel {
+    position: relative;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 20px 80px rgba(0, 0, 0, 0.28);
+  }
+
+  .glass-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at 20% 15%, rgba(56, 189, 248, 0.28), transparent 35%),
+      radial-gradient(circle at 85% 25%, rgba(232, 121, 249, 0.18), transparent 42%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
+    pointer-events: none;
+    opacity: 0.9;
+  }
+
+  .hud-card {
+    @apply rounded-3xl border border-white/10 bg-white/5 shadow-glow backdrop-blur-xl;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hud-card::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    pointer-events: none;
+    background: linear-gradient(90deg, rgba(56, 189, 248, 0.0), rgba(56, 189, 248, 0.22), rgba(232, 121, 249, 0.18), rgba(56, 189, 248, 0));
+    transform: translateX(-30%);
+    animation: holoSweep 3.6s ease-in-out infinite;
+    opacity: 0.7;
+  }
+
+  .neon-focus {
+    @apply focus:ring-2 focus:ring-cyan-400/70 focus:ring-offset-0;
+    box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.18);
   }
 
   .celebration-piece {
@@ -101,3 +155,18 @@ textarea {
     opacity: 0;
   }
 }
+
+@keyframes holoSweep {
+  0% {
+    transform: translateX(-35%);
+    opacity: 0.25;
+  }
+  45% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(35%);
+    opacity: 0.25;
+  }
+}
+
