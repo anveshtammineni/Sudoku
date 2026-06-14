@@ -19,7 +19,7 @@ export function Dashboard({ data, loading }: { data: DashboardData | null; loadi
     { label: 'Win Rate', value: `${data.stats.winRate}%`, icon: Trophy },
     { label: 'Best Time', value: data.stats.bestTime ? formatTime(data.stats.bestTime) : '--:--', icon: Medal },
     { label: 'Games Played', value: String(data.stats.totalGames), icon: History },
-    { label: 'Total Score', value: String(data.stats.totalScore), icon: Crown },
+    { label: 'Wins', value: String(data.stats.totalWins), icon: Crown },
   ];
 
   return (
@@ -44,7 +44,7 @@ export function Dashboard({ data, loading }: { data: DashboardData | null; loadi
                 <span>{card.label}</span>
                 <Icon size={14} />
               </div>
-              <div className="mt-2 text-2xl font-semibold text-white">{card.value}</div>
+              <div className="mt-2 text-2xl font-semibold font-mono text-white">{card.value}</div>
             </div>
           );
         })}
@@ -61,11 +61,13 @@ export function Dashboard({ data, loading }: { data: DashboardData | null; loadi
                 <div key={game.id} className="rounded-2xl border border-white/10 bg-slate-950/25 p-4 text-sm text-slate-200">
                   <div className="flex items-center justify-between gap-3">
                     <div className="font-medium capitalize text-white">{game.difficulty}</div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">{game.completed ? 'Completed' : game.status}</div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                      {game.status === 'lost' ? 'Lost' : game.completed ? 'Won' : game.status}
+                    </div>
                   </div>
                   <div className="mt-2 flex items-center justify-between text-slate-300">
-                    <span>Time {formatTime(game.timeElapsed)}</span>
-                    <span>Score {game.score}</span>
+                    <span className="font-mono">Time {formatTime(game.timeElapsed)}</span>
+                    <span className="font-mono">Wins {game.completed ? 1 : 0}</span>
                   </div>
                 </div>
               ))
@@ -83,8 +85,8 @@ export function Dashboard({ data, loading }: { data: DashboardData | null; loadi
                   <div className="text-xs uppercase tracking-[0.2em] text-slate-400">{entry.difficulty}</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-semibold text-emerald-200">{entry.bestScore}</div>
-                  <div className="text-xs text-slate-400">{formatTime(entry.bestTime)}</div>
+                  <div className="font-semibold font-mono text-emerald-200">{entry.wins}</div>
+                  <div className="text-xs font-mono text-slate-400">{formatTime(entry.bestTime)}</div>
                 </div>
               </div>
             ))}

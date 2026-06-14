@@ -3,12 +3,12 @@ import { formatTime } from '../utils/sudoku';
 import { useGame } from '../context/GameContext';
 
 export function StatsBar() {
-  const { timeElapsed, mistakes, hintsUsed, completionPercent, difficulty } = useGame();
+  const { timeElapsed, mistakes, hintsUsed, completionPercent, difficulty, maxHints, remainingHints, maxMistakes } = useGame();
 
   const items = [
     { label: 'Timer', value: formatTime(timeElapsed), icon: Clock3 },
-    { label: 'Mistakes', value: String(mistakes), icon: ShieldAlert },
-    { label: 'Hints', value: String(hintsUsed), icon: Lightbulb },
+    { label: 'Mistakes', value: `${mistakes}/${maxMistakes}`, icon: ShieldAlert },
+    { label: 'Hints', value: `${hintsUsed}/${maxHints}`, icon: Lightbulb },
     { label: 'Progress', value: `${completionPercent}%`, icon: FlagTriangleRight },
   ];
 
@@ -26,7 +26,7 @@ export function StatsBar() {
               <span>{item.label}</span>
               <Icon size={14} />
             </div>
-            <div className="mt-2 text-2xl font-semibold text-white">{item.value}</div>
+            <div className="mt-2 text-lg font-semibold font-mono text-white">{item.value}</div>
           </div>
         );
       })}

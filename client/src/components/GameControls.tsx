@@ -1,4 +1,4 @@
-import { Pause, Play, RefreshCw, RotateCcw, RotateCw, Sparkles, Volume2, VolumeX, WandSparkles } from 'lucide-react';
+import { Lock, Pause, Play, RefreshCw, Sparkles, Volume2, VolumeX, WandSparkles } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 
 const difficulties = [
@@ -15,13 +15,18 @@ export function GameControls() {
     paused,
     autoCheck,
     soundEnabled,
+    hintsUsed,
+    remainingHints,
+    maxHints,
+    progressByDifficulty,
+    unlockTargets,
+    unlockedDifficulties,
+    isDifficultyUnlocked,
     startNewGame,
     restartPuzzle,
     togglePause,
     toggleAutoCheck,
     toggleSound,
-    undo,
-    redo,
     requestHint,
     checkBoard,
   } = useGame();
@@ -37,7 +42,12 @@ export function GameControls() {
             className="w-full bg-transparent text-base font-semibold text-white outline-none"
           >
             {difficulties.map((option) => (
-              <option key={option.value} value={option.value} className="bg-slate-950 text-white">
+              <option
+                key={option.value}
+                value={option.value}
+                disabled={!isDifficultyUnlocked(option.value)}
+                className="bg-slate-950 text-white"
+              >
                 {option.label}
               </option>
             ))}
@@ -59,22 +69,40 @@ export function GameControls() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <button type="button" onClick={undo} className="control-button muted">
-          <RotateCcw size={16} />
-          Undo
-        </button>
-        <button type="button" onClick={redo} className="control-button muted">
-          <RotateCw size={16} />
-          Redo
-        </button>
-        <button type="button" onClick={() => void requestHint()} className="control-button accent">
+        <button
+          type="button"
+          onClick={() => void requestHint()}
+          disabled={remainingHints <= 0}
+          className="control-button accent"
+        >
           <WandSparkles size={16} />
-          Hint
+          Hint ({hintsUsed}/{maxHints})
         </button>
         <button type="button" onClick={() => void checkBoard()} className="control-button accent">
           <Sparkles size={16} />
           Check
         </button>
+        <div className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-slate-950/30 px-4 py-3 text-sm text-slate-300 sm:col-span-2 xl:col-span-2">
+          <Lock size={16} />
+          <span>
+            Modes unlocked: <span className="font-semibold text-white">{unlockedDifficulties.map((item) => item[0].toUpperCase() + item.slice(1)).join(', ')}</span>
+          </span>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
+          <div className="text-[11px] uppercase tracking-[0.2em] text-cyan-200/80">Unlock Medium</div>
+          <div className="mt-1 font-semibold">{Math.min(progressByDifficulty.easy, unlockTargets.medium)}/{unlockTargets.medium} Easy wins</div>
+        </div>
+        <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+          <div className="text-[11px] uppercase tracking-[0.2em] text-emerald-200/80">Unlock Hard</div>
+          <div className="mt-1 font-semibold">{Math.min(progressByDifficulty.medium, unlockTargets.hard)}/{unlockTargets.hard} Medium wins</div>
+        </div>
+        <div className="rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+          <div className="text-[11px] uppercase tracking-[0.2em] text-amber-200/80">Unlock Expert</div>
+          <div className="mt-1 font-semibold">{Math.min(progressByDifficulty.hard, unlockTargets.expert)}/{unlockTargets.expert} Hard wins</div>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">

@@ -1,11 +1,14 @@
+import './config/loadEnv.js';
 import { app } from './app.js';
-import { connectDatabase } from './config/db.js';
+import { connectDB } from './config/db.js';
 import { env } from './config/env.js';
 
 async function bootstrap() {
-  await connectDatabase();
+  const storage = await connectDB();
+  app.locals.storage = storage;
+
   app.listen(env.port, () => {
-    console.log(`Sudoku API running on http://localhost:${env.port}`);
+    console.log(`Sudoku API running on http://localhost:${env.port} (${storage} store)`);
   });
 }
 

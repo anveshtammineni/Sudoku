@@ -1,14 +1,26 @@
-import { Schema, model } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
-const userSchema = new Schema(
-  {
-    _id: { type: String },
-    name: { type: String, required: true, trim: true },
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    passwordHash: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now },
-  },
-  { versionKey: false }
-);
+export interface IUser extends Document<string> {
+  name: string;
+  email: string;
+  passwordHash: string;
+  createdAt: Date;
+  totalGames?: number;
+  totalWins?: number;
+  bestTime?: number;
+  winRate?: number;
+}
 
-export const UserModel = model('User', userSchema);
+const userSchema = new Schema<IUser>({
+  _id: { type: String, required: true },
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true, lowercase: true },
+  passwordHash: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  totalGames: { type: Number, default: 0 },
+  totalWins: { type: Number, default: 0 },
+  bestTime: { type: Number, default: 0 },
+  winRate: { type: Number, default: 0 },
+});
+
+export const User = mongoose.model<IUser>('User', userSchema);

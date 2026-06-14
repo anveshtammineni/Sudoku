@@ -43,19 +43,32 @@ export const solveGameController: RequestHandler = (req, res, next) => {
 
 export const saveGameController: RequestHandler = async (req, res, next) => {
   try {
+    console.log('[STATS DEBUG] saveGameController called with:', {
+      userId: req.user?.id,
+      completed: req.body.completed,
+      status: req.body.status,
+      timeElapsed: req.body.timeElapsed,
+    });
     const session = await saveGameProgress({
       ...req.body,
       userId: req.user?.id,
     });
+    console.log('[STATS DEBUG] saveGameController response:', {
+      sessionId: session.id,
+      userId: session.userId,
+      completed: session.completed,
+      status: session.status,
+    });
     res.status(201).json({ session });
   } catch (error) {
+    console.error('[STATS DEBUG] saveGameController error:', error);
     next(error);
   }
 };
 
-export const historyController: RequestHandler = (req, res, next) => {
+export const historyController: RequestHandler = async (req, res, next) => {
   try {
-    const sessions = getHistory(req.user?.id);
+    const sessions = await getHistory(req.user?.id);
     res.json({ sessions });
   } catch (error) {
     next(error);

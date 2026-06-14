@@ -36,15 +36,21 @@ export function getGameSessionById(id: string): GameSessionRecord | undefined {
 }
 
 export function upsertLeaderboardEntry(entry: LeaderboardEntry): LeaderboardEntry {
-  const current = leaderboard.get(entry.userId);
-  if (!current || entry.bestScore >= current.bestScore) {
-    leaderboard.set(entry.userId, entry);
-  }
-  return leaderboard.get(entry.userId) ?? entry;
+  const key = `${entry.userId}:${entry.difficulty}`;
+  const current = leaderboard.get(key);
+  const nextEntry: LeaderboardEntry = {
+    ...entry,
+    wins: (current?.wins ?? 0) + entry.wins,
+    bestScore: current ? Math.max(current.bestScore, entry.bestScore) : entry.bestScore,
+    bestTime: current && current.wins > 0 ? Math.min(current.bestTime, entry.bestTime) : entry.bestTime,
+  };
+
+  leaderboard.set(key, nextEntry);
+  return nextEntry;
 }
 
 export function getLeaderboardEntries(): LeaderboardEntry[] {
-  return Array.from(leaderboard.values()).sort((left, right) => right.bestScore - left.bestScore || left.bestTime - right.bestTime);
+  return Array.from(leaderboard.values()).sort((left, right) => right.wins - left.wins || left.bestTime - right.bestTime);
 }
 
 export function getLeaderboardByDifficulty(difficulty?: Difficulty): LeaderboardEntry[] {

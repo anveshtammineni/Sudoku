@@ -30,7 +30,11 @@ app.use(
 );
 
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    time: new Date().toISOString(),
+    storage: res.app.locals.storage ?? 'unknown',
+  });
 });
 
 app.use('/api/auth', authRouter);

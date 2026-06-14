@@ -9,6 +9,8 @@ export function SudokuBoard() {
     solution,
     selectedCell,
     invalidCells,
+    paused,
+    completed,
     selectCell,
     setCellValue,
   } = useGame();
@@ -22,7 +24,7 @@ export function SudokuBoard() {
   const selectedValue = selectedCell ? board[selectedCell.row][selectedCell.col] : 0;
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (!selectedCell) {
+    if (!selectedCell || paused || completed) {
       return;
     }
 
@@ -59,7 +61,7 @@ export function SudokuBoard() {
 
       <div
         ref={boardRef}
-        tabIndex={0}
+        tabIndex={paused || completed ? -1 : 0}
         onKeyDown={handleKeyDown}
         className="grid aspect-square grid-cols-9 overflow-hidden rounded-3xl bg-slate-950/55 outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-cyan-400/70"
       >
@@ -72,7 +74,7 @@ export function SudokuBoard() {
             const fixed = isFixedCell(puzzle, rowIndex, colIndex);
             const invalid = invalidKeys.has(`${rowIndex}-${colIndex}`);
             const cellClass = [
-              'relative flex items-center justify-center border border-white/6 text-lg font-semibold transition duration-200 sm:text-xl md:text-2xl',
+              'relative flex items-center justify-center border border-white/6 text-lg font-semibold font-mono transition duration-200 sm:text-xl md:text-2xl',
               colIndex % 3 === 0 ? 'border-l-2 border-l-white/18' : '',
               rowIndex % 3 === 0 ? 'border-t-2 border-t-white/18' : '',
               colIndex === 8 ? 'border-r-2 border-r-white/18' : '',

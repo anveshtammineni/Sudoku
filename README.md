@@ -50,4 +50,13 @@ npm run start
 
 ## Environment
 
-The app runs without MongoDB, but if `MONGODB_URI` is set and reachable, user and game data are persisted in MongoDB.
+| Variable | Description |
+|----------|-------------|
+| `MONGODB_URI` | MongoDB connection string (e.g. `mongodb://localhost:27017/`). The `sudoku` database name is added automatically if omitted. |
+| `JWT_SECRET` | Secret used to sign auth tokens |
+| `CLIENT_URL` | Allowed CORS origin for the React app |
+| `VITE_API_URL` | API base URL used by the client |
+
+The API loads `.env` from the project root. If MongoDB is unreachable, it falls back to an in-memory store so development can continue.
+
+Check storage mode: `GET http://localhost:4000/api/health` returns `"storage": "mongo"` or `"memory"`.

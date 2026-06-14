@@ -26,10 +26,23 @@ export async function saveGame(payload: {
   mistakes: number;
   hintsUsed: number;
   completed: boolean;
-  status?: 'active' | 'paused' | 'completed';
+  status?: 'active' | 'paused' | 'completed' | 'lost';
 }) {
-  const response = await apiClient.post('/game/save', payload);
-  return response.data as { session: GameSession };
+  console.log('[CLIENT DEBUG] saveGame called with:', {
+    gameId: payload.gameId,
+    completed: payload.completed,
+    status: payload.status,
+    timeElapsed: payload.timeElapsed,
+    mistakes: payload.mistakes,
+  });
+  try {
+    const response = await apiClient.post('/game/save', payload);
+    console.log('[CLIENT DEBUG] saveGame response:', response.data);
+    return response.data as { session: GameSession };
+  } catch (error) {
+    console.error('[CLIENT DEBUG] saveGame error:', error);
+    throw error;
+  }
 }
 
 export async function getHistory() {

@@ -1,8 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
-import { isDatabaseReady } from '../config/db.js';
-import { saveUser, getUserByEmail, getUserById } from '../data/memoryStore.js';
-import { UserModel } from '../models/User.js';
+import { saveUser, getUserByEmail, getUserById } from '../data/store.js';
 import type { UserRecord } from '../types/domain.js';
 import { signToken } from '../utils/jwt.js';
 
@@ -16,7 +14,7 @@ function sanitizeUser(user: UserRecord) {
 }
 
 export async function registerUser(input: { name: string; email: string; password: string }) {
-  const existing = getUserByEmail(input.email);
+  const existing = await getUserByEmail(input.email);
   if (existing) {
     throw new Error('Email already registered');
   }
@@ -30,17 +28,7 @@ export async function registerUser(input: { name: string; email: string; passwor
     createdAt: new Date().toISOString(),
   };
 
-  saveUser(user);
-
-  if (isDatabaseReady()) {
-    await UserModel.create({
-      _id: user.id,
-      name: user.name,
-      email: user.email,
-      passwordHash: user.passwordHash,
-      createdAt: new Date(user.createdAt),
-    });
-  }
+  await saveUser(user);
 
   return {
     user: sanitizeUser(user),
@@ -49,7 +37,8 @@ export async function registerUser(input: { name: string; email: string; passwor
 }
 
 export async function loginUser(input: { email: string; password: string }) {
-  const user = getUserByEmail(input.email);
+  const user = await getUserByEmail(input.email);
+
   if (!user) {
     throw new Error('Invalid credentials');
   }
@@ -66,7 +55,8 @@ export async function loginUser(input: { email: string; password: string }) {
 }
 
 export async function getCurrentUser(userId: string) {
-  const user = getUserById(userId);
+  const user = await getUserById(userId);
+
   if (!user) {
     throw new Error('User not found');
   }

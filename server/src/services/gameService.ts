@@ -1,8 +1,14 @@
 import { randomUUID } from 'crypto';
-import { isDatabaseReady } from '../config/db.js';
-import { saveGameSession, getGameSessionsByUser, upsertLeaderboardEntry, getLeaderboardEntries, getLeaderboardByDifficulty, getUserById } from '../data/memoryStore.js';
-import { GameSessionModel } from '../models/GameSession.js';
-import { LeaderboardModel } from '../models/Leaderboard.js';
+import {
+  saveGameSession,
+  getGameSessionsByUser,
+  upsertLeaderboardEntry,
+  getLeaderboardEntries,
+  getLeaderboardByDifficulty,
+  getUserById,
+  getGameSessionById,
+  saveUser,
+} from '../data/store.js';
 import type { Board, Difficulty, GameSessionRecord } from '../types/domain.js';
 import { calculateScore } from './scoreService.js';
 import { createHint, generatePuzzle, normalizeBoard, solveBoard, validateBoard } from './sudokuService.js';
@@ -46,26 +52,7 @@ function toGameSessionRecord(params: {
 export async function createNewGame(difficulty: Difficulty, userId?: string) {
   const { puzzle, solution, clues } = generatePuzzle(difficulty);
   const session = toGameSessionRecord(userId ? { userId, difficulty, puzzle, solution } : { difficulty, puzzle, solution });
-  saveGameSession(session);
-
-  if (isDatabaseReady()) {
-    await GameSessionModel.create({
-      _id: session.id,
-      userId: session.userId,
-      difficulty: session.difficulty,
-      puzzle: session.puzzle,
-      solution: session.solution,
-      board: session.board,
-      completed: session.completed,
-      timeElapsed: session.timeElapsed,
-      mistakes: session.mistakes,
-      hintsUsed: session.hintsUsed,
-      score: session.score,
-      status: session.status,
-      createdAt: new Date(session.createdAt),
-      updatedAt: new Date(session.updatedAt),
-    });
-  }
+  await saveGameSession(session);
 
   return {
     gameId: session.id,
@@ -107,8 +94,12 @@ export async function saveGameProgress(input: {
     hintsUsed: input.hintsUsed,
   });
 
+  const sessionId = input.gameId ?? randomUUID();
+  const existingSession = input.gameId ? await getGameSessionById(input.gameId) : undefined;
+  const now = new Date().toISOString();
+
   const session: GameSessionRecord = {
-    id: input.gameId ?? randomUUID(),
+    id: sessionId,
     difficulty: input.difficulty,
     puzzle: cloneBoard(input.puzzle),
     solution: cloneBoard(input.solution),
@@ -119,45 +110,95 @@ export async function saveGameProgress(input: {
     hintsUsed: input.hintsUsed,
     score,
     status: input.status ?? (input.completed ? 'completed' : 'active'),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: existingSession?.createdAt ?? now,
+    updatedAt: now,
     ...(input.userId ? { userId: input.userId } : {}),
   };
 
-  saveGameSession(session);
+  await saveGameSession(session);
 
-  if (session.userId) {
-    const user = getUserById(session.userId);
-    upsertLeaderboardEntry({
+  console.log('[STATS DEBUG] Game saved:', {
+    sessionId: session.id,
+    userId: session.userId,
+    completed: session.completed,
+    status: session.status,
+    timeElapsed: session.timeElapsed,
+    score: session.score,
+  });
+
+  if (session.userId && session.completed) {
+    console.log('[STATS DEBUG] Game completed, updating user statistics');
+    const user = await getUserById(session.userId);
+    console.log('[STATS DEBUG] Current user stats:', user);
+
+    await upsertLeaderboardEntry({
       userId: session.userId,
       name: user?.name ?? session.userId,
       difficulty: session.difficulty,
       bestScore: session.score,
       bestTime: session.timeElapsed,
-      wins: session.completed ? 1 : 0,
+      wins: 1,
       updatedAt: session.updatedAt,
     });
-  }
 
-  if (isDatabaseReady()) {
-    await GameSessionModel.findByIdAndUpdate(session.id, session, { upsert: true, new: true, setDefaultsOnInsert: true }).exec();
-    if (session.userId) {
-      const user = getUserById(session.userId);
-      await LeaderboardModel.findOneAndUpdate(
-        { userId: session.userId, difficulty: session.difficulty },
-        {
-          _id: `${session.userId}:${session.difficulty}`,
-          userId: session.userId,
-          name: user?.name ?? session.userId,
-          difficulty: session.difficulty,
-          bestScore: session.score,
-          bestTime: session.timeElapsed,
-          wins: session.completed ? 1 : 0,
-          updatedAt: new Date(session.updatedAt),
-        },
-        { upsert: true, new: true }
-      ).exec();
+    // Update user statistics
+    if (user) {
+      const totalGames = (user.totalGames ?? 0) + 1;
+      const totalWins = (user.totalWins ?? 0) + 1;
+      const bestTime = user.bestTime && user.bestTime > 0 ? Math.min(user.bestTime, session.timeElapsed) : session.timeElapsed;
+      const winRate = Math.round((totalWins / totalGames) * 100);
+
+      console.log('[STATS DEBUG] Calculated new stats:', {
+        totalGames,
+        totalWins,
+        bestTime,
+        winRate,
+        previousBestTime: user.bestTime,
+        currentTime: session.timeElapsed,
+      });
+
+      const updatedUser = await saveUser({
+        ...user,
+        totalGames,
+        totalWins,
+        bestTime,
+        winRate,
+      });
+
+      console.log('[STATS DEBUG] User updated successfully:', updatedUser);
+    } else {
+      console.error('[STATS DEBUG] User not found for ID:', session.userId);
     }
+  } else if (session.userId) {
+    console.log('[STATS DEBUG] Game not completed, updating total games only');
+    // Update total games even if not completed
+    const user = await getUserById(session.userId);
+    console.log('[STATS DEBUG] Current user stats before update:', user);
+
+    if (user) {
+      const totalGames = (user.totalGames ?? 0) + 1;
+      const totalWins = user.totalWins ?? 0;
+      const winRate = totalGames > 0 ? Math.round((totalWins / totalGames) * 100) : 0;
+
+      console.log('[STATS DEBUG] Calculated new stats (non-completed):', {
+        totalGames,
+        totalWins,
+        winRate,
+      });
+
+      const updatedUser = await saveUser({
+        ...user,
+        totalGames,
+        totalWins,
+        winRate,
+      });
+
+      console.log('[STATS DEBUG] User updated successfully (non-completed):', updatedUser);
+    } else {
+      console.error('[STATS DEBUG] User not found for ID:', session.userId);
+    }
+  } else {
+    console.log('[STATS DEBUG] No userId associated with session, skipping stats update');
   }
 
   return session;
@@ -167,10 +208,11 @@ export async function createHintForGame(board: Board, solution: Board) {
   return createHint(normalizeBoard(board), solution);
 }
 
-export function getHistory(userId?: string) {
-  return getGameSessionsByUser(userId).sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+export async function getHistory(userId?: string) {
+  const games = await getGameSessionsByUser(userId);
+  return games.sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }
 
-export function getLeaderboard(difficulty?: Difficulty) {
+export async function getLeaderboard(difficulty?: Difficulty) {
   return difficulty ? getLeaderboardByDifficulty(difficulty) : getLeaderboardEntries();
 }

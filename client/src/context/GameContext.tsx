@@ -6,6 +6,30 @@ import { analyzeBoard, cloneBoard, findFirstEditableCell, isFixedCell } from '..
 
 type SelectedCell = { row: number; col: number } | null;
 
+type ProgressState = Record<Difficulty, number>;
+
+const UNLOCK_TARGETS = {
+  medium: 3,
+  hard: 3,
+  expert: 2,
+} as const;
+
+const HINT_LIMITS: Record<Difficulty, number> = {
+  easy: 4,
+  medium: 4,
+  hard: 4,
+  expert: 4,
+};
+const MAX_MISTAKES = 3;
+const PROGRESS_STORAGE_KEY = 'sudoku-progress-v1';
+
+const DEFAULT_PROGRESS: ProgressState = {
+  easy: 0,
+  medium: 0,
+  hard: 0,
+  expert: 0,
+};
+
 type GameContextValue = {
   gameId: string | null;
   difficulty: Difficulty;
@@ -16,6 +40,7 @@ type GameContextValue = {
   loading: boolean;
   paused: boolean;
   completed: boolean;
+  lost: boolean;
   autoCheck: boolean;
   timeElapsed: number;
   mistakes: number;
@@ -24,6 +49,14 @@ type GameContextValue = {
   completionPercent: number;
   celebration: boolean;
   soundEnabled: boolean;
+  maxHints: number;
+  maxMistakes: number;
+  remainingHints: number;
+  lastSavedOutcomeTick: number;
+  progressByDifficulty: ProgressState;
+  unlockTargets: typeof UNLOCK_TARGETS;
+  unlockedDifficulties: Difficulty[];
+  isDifficultyUnlocked: (difficulty: Difficulty) => boolean;
   startNewGame: (difficulty: Difficulty) => Promise<void>;
   selectCell: (row: number, col: number) => void;
   setCellValue: (value: number) => void;
@@ -44,6 +77,29 @@ function emptyBoard(): Board {
   return Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => 0));
 }
 
+function loadProgress(): ProgressState {
+  if (typeof window === 'undefined') {
+    return DEFAULT_PROGRESS;
+  }
+
+  try {
+    const stored = window.localStorage.getItem(PROGRESS_STORAGE_KEY);
+    if (!stored) {
+      return DEFAULT_PROGRESS;
+    }
+
+    const parsed = JSON.parse(stored) as Partial<ProgressState>;
+    return {
+      easy: Number(parsed.easy ?? 0),
+      medium: Number(parsed.medium ?? 0),
+      hard: Number(parsed.hard ?? 0),
+      expert: Number(parsed.expert ?? 0),
+    };
+  } catch {
+    return DEFAULT_PROGRESS;
+  }
+}
+
 export function GameProvider({ children }: { children: ReactNode }) {
   const [gameId, setGameId] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
@@ -54,17 +110,47 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [paused, setPaused] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [lost, setLost] = useState(false);
   const [autoCheck, setAutoCheck] = useState(true);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [mistakes, setMistakes] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
+  const [progress, setProgress] = useState<ProgressState>(() => loadProgress());
   const [history, setHistory] = useState<Board[]>([]);
   const [future, setFuture] = useState<Board[]>([]);
   const [celebration, setCelebration] = useState(false);
+  const [lastSavedOutcomeTick, setLastSavedOutcomeTick] = useState(0);
   const completionSaved = useRef(false);
+  const lossSaved = useRef(false);
   const { enabled: soundEnabled, toggleSound, playClick, playError, playSuccess } = useSound();
 
   const analysis = useMemo(() => analyzeBoard(board, solution), [board, solution]);
+  const maxHints = HINT_LIMITS[difficulty];
+  const remainingHints = Math.max(0, maxHints - hintsUsed);
+  const unlockedDifficulties = useMemo(() => {
+    const unlocked: Difficulty[] = ['easy'];
+
+    if (progress.easy >= UNLOCK_TARGETS.medium) {
+      unlocked.push('medium');
+    }
+    if (progress.medium >= UNLOCK_TARGETS.hard) {
+      unlocked.push('hard');
+    }
+    if (progress.hard >= UNLOCK_TARGETS.expert) {
+      unlocked.push('expert');
+    }
+
+    return unlocked;
+  }, [progress]);
+  const isDifficultyUnlocked = (nextDifficulty: Difficulty) => unlockedDifficulties.includes(nextDifficulty);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progress));
+  }, [progress]);
 
   useEffect(() => {
     if (!puzzle.some((row) => row.some(Boolean))) {
@@ -80,7 +166,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [paused, completed, puzzle]);
 
   useEffect(() => {
-    if (!analysis.isSolved || completed) {
+    if (!analysis.isSolved || completed || lost) {
       return;
     }
 
@@ -88,6 +174,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setPaused(true);
     setCelebration(true);
     playSuccess();
+    setProgress((current) => ({
+      ...current,
+      [difficulty]: current[difficulty] + 1,
+    }));
 
     if (!completionSaved.current) {
       completionSaved.current = true;
@@ -102,14 +192,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
         hintsUsed,
         completed: true,
         status: 'completed',
-      }).catch(() => undefined);
+      })
+        .catch(() => undefined)
+        .finally(() => setLastSavedOutcomeTick((current) => current + 1));
     }
 
     const timeout = window.setTimeout(() => setCelebration(false), 4200);
     return () => window.clearTimeout(timeout);
-  }, [analysis.isSolved, board, completed, difficulty, gameId, hintsUsed, mistakes, paused, puzzle, solution, timeElapsed, playSuccess]);
+  }, [analysis.isSolved, board, completed, difficulty, gameId, hintsUsed, lost, mistakes, paused, puzzle, solution, timeElapsed, playSuccess]);
 
   async function startNewGame(nextDifficulty: Difficulty) {
+    if (!isDifficultyUnlocked(nextDifficulty)) {
+      return;
+    }
+
     setLoading(true);
     try {
       const result = await getNewGame(nextDifficulty);
@@ -121,6 +217,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setSelectedCell(findFirstEditableCell(result.puzzle));
       setPaused(false);
       setCompleted(false);
+      setLost(false);
       setAutoCheck(true);
       setTimeElapsed(0);
       setMistakes(0);
@@ -129,6 +226,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setFuture([]);
       setCelebration(false);
       completionSaved.current = false;
+      lossSaved.current = false;
     } finally {
       setLoading(false);
     }
@@ -148,7 +246,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }
 
   function setCellValue(value: number) {
-    if (!selectedCell || paused || completed) {
+    if (!selectedCell || paused || completed || lost) {
       return;
     }
 
@@ -162,9 +260,33 @@ export function GameProvider({ children }: { children: ReactNode }) {
     updateBoard(nextBoard);
 
     if (value !== 0 && value !== solution[row][col]) {
-      setMistakes((current) => current + 1);
+      const nextMistakes = mistakes + 1;
+      setMistakes(nextMistakes);
       if (soundEnabled) {
         playError();
+      }
+
+      if (nextMistakes >= MAX_MISTAKES) {
+        setLost(true);
+        setPaused(true);
+
+        if (!lossSaved.current) {
+          lossSaved.current = true;
+          void saveGame({
+            gameId: gameId ?? undefined,
+            difficulty,
+            puzzle,
+            solution,
+            board: nextBoard,
+            timeElapsed,
+            mistakes: nextMistakes,
+            hintsUsed,
+            completed: false,
+            status: 'lost',
+          })
+            .catch(() => undefined)
+            .finally(() => setLastSavedOutcomeTick((current) => current + 1));
+        }
       }
     }
   }
@@ -202,6 +324,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setSelectedCell(findFirstEditableCell(puzzle));
     setPaused(false);
     setCompleted(false);
+    setLost(false);
     setTimeElapsed(0);
     setMistakes(0);
     setHintsUsed(0);
@@ -209,17 +332,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setFuture([]);
     setCelebration(false);
     completionSaved.current = false;
+    lossSaved.current = false;
   }
 
   function togglePause() {
-    if (completed) {
+    if (completed || lost) {
       return;
     }
     setPaused((current) => !current);
   }
 
   async function requestHint() {
-    if (paused || completed) {
+    if (paused || completed || remainingHints <= 0) {
       return;
     }
 
@@ -258,6 +382,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         loading,
         paused,
         completed,
+        lost,
         autoCheck,
         timeElapsed,
         mistakes,
@@ -266,6 +391,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
         completionPercent: analysis.progress,
         celebration,
         soundEnabled,
+        maxHints,
+        maxMistakes: MAX_MISTAKES,
+        remainingHints,
+        lastSavedOutcomeTick,
+        progressByDifficulty: progress,
+        unlockTargets: UNLOCK_TARGETS,
+        unlockedDifficulties,
+        isDifficultyUnlocked,
         startNewGame,
         selectCell,
         setCellValue,

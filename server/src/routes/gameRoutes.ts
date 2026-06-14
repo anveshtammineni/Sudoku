@@ -27,13 +27,13 @@ const saveSchema = z.object({
   mistakes: z.number().nonnegative(),
   hintsUsed: z.number().nonnegative(),
   completed: z.boolean(),
-  status: z.enum(['active', 'paused', 'completed']).optional(),
+  status: z.enum(['active', 'paused', 'completed', 'lost']).optional(),
 });
 
-gameRouter.get('/new', newGameController);
+gameRouter.get('/new', requireAuth, newGameController);
 gameRouter.post('/validate', validateRequest(validateSchema), validateGameController);
 gameRouter.post('/solve', validateRequest(solveSchema), solveGameController);
-gameRouter.post('/save', validateRequest(saveSchema), saveGameController);
+gameRouter.post('/save', requireAuth, validateRequest(saveSchema), saveGameController);
 gameRouter.post('/hint', validateRequest(z.object({ board: boardSchema, solution: boardSchema })), hintController);
 gameRouter.get('/history', requireAuth, historyController);
 

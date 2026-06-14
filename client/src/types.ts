@@ -6,6 +6,10 @@ export interface User {
   name: string;
   email: string;
   createdAt: string;
+  totalGames?: number;
+  totalWins?: number;
+  bestTime?: number;
+  winRate?: number;
 }
 
 export interface GameSession {
@@ -20,7 +24,7 @@ export interface GameSession {
   mistakes: number;
   hintsUsed: number;
   score: number;
-  status: 'active' | 'paused' | 'completed';
+  status: 'active' | 'paused' | 'completed' | 'lost';
   createdAt: string;
   updatedAt: string;
 }
@@ -45,7 +49,7 @@ export interface DashboardData {
     averageTime: number;
     totalMistakes: number;
     totalHints: number;
-    totalScore: number;
+    totalWins: number;
   };
   recentGames: GameSession[];
   leaderboard: LeaderboardEntry[];

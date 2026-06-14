@@ -9,6 +9,10 @@ export interface UserRecord {
   email: string;
   passwordHash: string;
   createdAt: string;
+  totalGames?: number;
+  totalWins?: number;
+  bestTime?: number;
+  winRate?: number;
 }
 
 export interface GameSessionRecord {
@@ -23,7 +27,7 @@ export interface GameSessionRecord {
   mistakes: number;
   hintsUsed: number;
   score: number;
-  status: 'active' | 'paused' | 'completed';
+  status: 'active' | 'paused' | 'completed' | 'lost';
   createdAt: string;
   updatedAt: string;
 }
