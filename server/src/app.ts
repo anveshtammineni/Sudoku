@@ -14,7 +14,19 @@ export const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: env.clientUrl,
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        env.clientUrl,
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'https://sudoku-49fs.onrender.com',
+      ];
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   })
 );
