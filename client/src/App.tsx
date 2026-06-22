@@ -220,7 +220,7 @@ export default function App() {
 
         {isOverlayVisible ? (
           <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 dark:bg-slate-950/80 px-4 backdrop-blur-xl">
-            <div className="w-full max-w-2xl rounded-[2rem] border border-slate-200/80 dark:border-white/15 bg-slate-100/95 dark:bg-slate-950/92 p-6 shadow-2xl shadow-black/40">
+            <div className="w-full max-w-2xl rounded-[2rem] border border-slate-200/80 dark:border-white/15 bg-slate-100/95 dark:bg-slate-950/95 p-6 shadow-2xl shadow-black/40">
               {game.completed ? (
                 <>
                   <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 dark:border-emerald-400/20 bg-emerald-400/15 dark:bg-emerald-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-800 dark:text-emerald-100">
