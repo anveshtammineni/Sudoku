@@ -74,11 +74,11 @@ export function SudokuBoard() {
             const fixed = isFixedCell(puzzle, rowIndex, colIndex);
             const invalid = invalidKeys.has(`${rowIndex}-${colIndex}`);
             const cellClass = [
-              'relative flex items-center justify-center border border-slate-300/40 dark:border-white/6 text-lg font-semibold font-mono transition duration-200 sm:text-xl md:text-2xl',
-              colIndex % 3 === 0 ? 'border-l-2 border-l-slate-400/60 dark:border-l-white/18' : '',
-              rowIndex % 3 === 0 ? 'border-t-2 border-t-slate-400/60 dark:border-t-white/18' : '',
-              colIndex === 8 ? 'border-r-2 border-r-slate-400/60 dark:border-r-white/18' : '',
-              rowIndex === 8 ? 'border-b-2 border-b-slate-400/60 dark:border-b-white/18' : '',
+              'relative flex items-center justify-center border border-slate-300 dark:border-white/10 text-lg font-semibold font-mono transition duration-200 sm:text-xl md:text-2xl',
+              colIndex % 3 === 0 ? 'border-l-2 border-l-slate-500 dark:border-l-white/30' : '',
+              rowIndex % 3 === 0 ? 'border-t-2 border-t-slate-500 dark:border-t-white/30' : '',
+              colIndex === 8 ? 'border-r-2 border-r-slate-500 dark:border-r-white/30' : '',
+              rowIndex === 8 ? 'border-b-2 border-b-slate-500 dark:border-b-white/30' : '',
               isSelected ? 'z-10 bg-cyan-500/20 dark:bg-cyan-400/20 text-cyan-800 dark:text-cyan-50 ring-2 ring-cyan-500 dark:ring-cyan-300' : '',
               !isSelected && sameRow ? 'bg-slate-200/30 dark:bg-white/7 text-slate-800 dark:text-white' : '',
               !isSelected && sameCol ? 'bg-slate-200/30 dark:bg-white/7 text-slate-800 dark:text-white' : '',
