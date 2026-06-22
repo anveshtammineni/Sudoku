@@ -30,13 +30,13 @@ export function AuthPanel() {
   }
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-glow backdrop-blur-xl dark:bg-slate-950/55">
-      <div className="mb-4 flex gap-2 rounded-2xl border border-white/10 bg-slate-950/25 p-1">
-        <button type="button" onClick={() => setMode('login')} className={`flex-1 rounded-xl px-4 py-2 text-sm font-semibold transition ${mode === 'login' ? 'bg-cyan-400/20 text-cyan-50' : 'text-slate-400'}`}>
+    <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-slate-950/55 p-5 shadow-glow backdrop-blur-xl">
+      <div className="mb-4 flex gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-200/50 dark:bg-slate-950/25 p-1">
+        <button type="button" onClick={() => setMode('login')} className={`flex-1 rounded-xl px-4 py-2 text-sm font-semibold transition ${mode === 'login' ? 'bg-cyan-400/25 dark:bg-cyan-400/20 text-cyan-800 dark:text-cyan-50' : 'text-slate-500 dark:text-slate-400'}`}>
           <LogIn size={14} className="mr-2 inline" />
           Login
         </button>
-        <button type="button" onClick={() => setMode('register')} className={`flex-1 rounded-xl px-4 py-2 text-sm font-semibold transition ${mode === 'register' ? 'bg-cyan-400/20 text-cyan-50' : 'text-slate-400'}`}>
+        <button type="button" onClick={() => setMode('register')} className={`flex-1 rounded-xl px-4 py-2 text-sm font-semibold transition ${mode === 'register' ? 'bg-cyan-400/25 dark:bg-cyan-400/20 text-cyan-800 dark:text-cyan-50' : 'text-slate-500 dark:text-slate-400'}`}>
           <UserPlus size={14} className="mr-2 inline" />
           Register
         </button>
@@ -61,7 +61,7 @@ export function AuthPanel() {
           className="field-input"
           autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
         />
-        {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">{error}</div> : null}
+        {error ? <div className="rounded-2xl border border-rose-500/30 dark:border-rose-500/20 bg-rose-500/15 dark:bg-rose-500/10 px-4 py-3 text-sm text-rose-800 dark:text-rose-100">{error}</div> : null}
         <button type="submit" disabled={loading} className="w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-3 font-semibold text-slate-950 transition hover:brightness-110 disabled:opacity-60">
           {mode === 'register' ? 'Create Account' : 'Sign In'}
         </button>

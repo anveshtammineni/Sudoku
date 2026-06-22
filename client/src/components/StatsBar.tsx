@@ -14,19 +14,19 @@ export function StatsBar() {
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 backdrop-blur-xl dark:bg-slate-950/50 xl:col-span-1">
-        <div className="text-xs uppercase tracking-[0.2em] text-cyan-200/80">Difficulty</div>
-        <div className="mt-1 text-lg font-semibold capitalize text-white">{difficulty}</div>
+      <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-slate-950/50 px-4 py-3 text-sm text-slate-700 dark:text-slate-200 backdrop-blur-xl xl:col-span-1">
+        <div className="text-xs uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-200/80">Difficulty</div>
+        <div className="mt-1 text-lg font-semibold capitalize text-slate-800 dark:text-white">{difficulty}</div>
       </div>
       {items.map((item) => {
         const Icon = item.icon;
         return (
-          <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl dark:bg-slate-950/50">
-            <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-300">
+          <div key={item.label} className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/70 dark:bg-slate-950/50 px-4 py-3 backdrop-blur-xl">
+            <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-600 dark:text-slate-300">
               <span>{item.label}</span>
               <Icon size={14} />
             </div>
-            <div className="mt-2 text-lg font-semibold font-mono text-white">{item.value}</div>
+            <div className="mt-2 text-lg font-semibold font-mono text-slate-800 dark:text-white">{item.value}</div>
           </div>
         );
       })}
