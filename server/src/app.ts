@@ -21,10 +21,11 @@ app.use(
         'http://localhost:5174',
         'https://sudoku-49fs.onrender.com',
       ];
-      if (!origin || allowedOrigins.includes(origin)) {
+      const isAllowedVercel = origin && /^https:\/\/.*\.vercel\.app$/.test(origin);
+      if (!origin || allowedOrigins.includes(origin) || isAllowedVercel) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        callback(null, false);
       }
     },
     credentials: true,
